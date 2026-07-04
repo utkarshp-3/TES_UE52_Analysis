@@ -1,6 +1,6 @@
-# TES_UE52
+# TES_UE52_Analysis
 
-**TES_UE52** is a Python-based data analysis framework for processing data acquired from the **Transition Edge Sensor (TES)** at the **UE52-SGM beamline** of **BESSY II**.
+**TES_UE52_Analysis** is a Python-based data analysis framework for processing data acquired from the **Transition Edge Sensor (TES)** at the **UE52-SGM beamline** of **BESSY II**.
 
 The repository provides a complete workflow for converting raw TES detector data into processed Resonant Inelastic X-ray Scattering (RIXS) datasets and extracting spectroscopic information such as Partial Fluorescence Yield (PFY) spectra and RIXS cuts.
 
