@@ -256,3 +256,89 @@ This utility is particularly useful for investigating resonant features that fol
 Additional scripts for calibration, visualization, fitting, and advanced analysis will be added here as the repository continues to develop.
 
 ---
+
+---
+
+## Integrated Emission Spectrum (XES)
+
+This utility extracts an **Integrated Emission Spectrum (X-ray Emission Spectrum, XES)** from one or more processed TES RIXS datasets.
+
+The script averages multiple scans and integrates the RIXS intensity along the incident-energy axis to produce an emission spectrum. Users may integrate over the entire incident-energy range or restrict the integration to a selected monochromator energy window.
+
+### Features
+
+- Average multiple RIXS scans
+- Optional averaging over any scan range
+- Integration over the full incident-energy range
+- Optional integration within a user-defined monochromator energy window
+- Optional intensity normalization
+- Automatic HDF5 export of the averaged RIXS dataset
+- Export of the extracted emission spectrum as a text file
+
+### User Inputs
+
+The script requests:
+
+- Start scan number
+- End scan number
+- Whether to limit the incident-energy integration range
+  - Minimum incident energy (optional)
+  - Maximum incident energy (optional)
+- Whether to normalize the emission spectrum
+
+### Processing Workflow
+
+The script performs the following operations:
+
+1. Loads all selected processed RIXS scans.
+2. Verifies that all datasets have identical dimensions.
+3. Computes the averaged RIXS map.
+4. Saves the averaged dataset as an HDF5 file.
+5. Integrates the RIXS intensity along the incident-energy axis.
+6. Optionally restricts the integration to a selected monochromator energy window.
+7. Optionally normalizes the resulting emission spectrum.
+8. Displays the extracted emission spectrum.
+9. Saves the spectrum as a text file.
+
+### Output
+
+The averaged dataset is saved as
+
+```text
+Emission_avg_<start>_<end>.h5
+```
+
+containing
+
+```text
+avg_mono
+avg_emission
+avg_counts
+```
+
+The extracted emission spectrum is exported as
+
+```text
+EmissionSpectrum_<start>_<end>.txt
+```
+
+or, when a monochromator range is selected,
+
+```text
+EmissionSpectrum_<start>_<end>_<mono_min>_<mono_max>eV.txt
+```
+
+Each output text file contains two columns:
+
+| Column | Description |
+|--------|-------------|
+| Emission Energy (eV) | Emission-energy axis |
+| Intensity | Integrated emission intensity |
+
+### Generated Figure
+
+The script produces a plot of the integrated emission spectrum showing intensity as a function of emission energy.
+
+If a monochromator energy window is selected, the corresponding integration range is included in the figure title.
+
+This utility provides a convenient method for extracting conventional X-ray emission spectra (XES) from TES RIXS datasets and allows users to investigate how the emission spectrum changes with the selected incident-energy range.
