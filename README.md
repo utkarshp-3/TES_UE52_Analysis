@@ -1,12 +1,23 @@
 # TES_UE52
 
-**TES_UE52** is a Python-based data analysis framework for processing data acquired from the **Transition Edge Sensor (TES)** at the **UE52-SGM beamline** of **BESSY II**. The analysis workflow is organized into modular stages to simplify data processing, improve reproducibility, and facilitate future development.
+**TES_UE52** is a Python-based data analysis framework for processing data acquired from the **Transition Edge Sensor (TES)** at the **UE52-SGM beamline** of **BESSY II**.
+
+The repository provides a complete workflow for converting raw TES detector data into processed Resonant Inelastic X-ray Scattering (RIXS) datasets and extracting spectroscopic information such as Partial Fluorescence Yield (PFY) spectra and RIXS cuts.
+
+The analysis is divided into two sections:
+
+- **Core Analysis Pipeline** – the standard workflow for processing TES data.
+- **Additional Analysis Utilities** – optional tools for advanced visualization and specialized analyses.
+
+---
+
+# Core Analysis Pipeline
 
 ## 1. Preprocessing
 
 The preprocessing module converts the raw TES detector data and the corresponding beamline metadata into a compact, standardized dataset for RIXS analysis. This significantly reduces the amount of data that needs to be processed in later analysis steps while preserving all relevant experimental information.
 
-## Input
+### Input
 
 The preprocessing script requires two input datasets for each scan:
 
@@ -18,18 +29,18 @@ The preprocessing script requires two input datasets for each scan:
   - `date_run_SCAN_scan_xxxx_data/xxxx_beamline_data.npz`
   - Contains the monochromator (incident energy), scan timing, and other beamline parameters required to associate TES events with the corresponding scan point.
 
-## Processing Workflow
+### Processing Workflow
 
 For each scan, the script performs the following operations:
 
 1. Loads the TES detector events.
 2. Removes detector channels with insufficient statistics.
 3. Loads the corresponding beamline data.
-4. Matches every TES event to its beamline scan point using the acquisition timestamps.
-5. Constructs the RIXS plane by binning the emission energy against the incident energy.
+4. Matches every TES event to its beamline scan point using timestamps.
+5. Constructs the RIXS plane by binning emission energy against incident energy.
 6. Saves the processed data together with a quick-look visualization.
 
-## Output
+### Output
 
 For every processed scan, three files are generated:
 
@@ -37,11 +48,11 @@ For every processed scan, three files are generated:
 |------|-------------|
 | `scanXXXX.npz` | Processed RIXS dataset containing the incident energy grid (`mono`), emission energy grid (`emission`), and 2D intensity map (`counts`). |
 | `scanXXXX_bld.npz` | Copy of the beamline metadata used during preprocessing. |
-| `scanXXXX.png` | Quick-look visualization of the RIXS plane for rapid inspection of the processed scan. |
+| `scanXXXX.png` | Quick-look visualization of the RIXS plane. |
 
-Example output:
+Example:
 
-```
+```text
 scan1587.npz
 scan1587_bld.npz
 scan1587.png
@@ -49,195 +60,124 @@ scan1587.png
 scan1588.npz
 scan1588_bld.npz
 scan1588.png
-
-scan1589.npz
-scan1589_bld.npz
-scan1589.png
 ```
 
-In addition, the script generates
+The script also generates
 
-```
+```text
 processing_log.txt
 ```
 
-which records the processing status, detected files, scan statistics, and any errors encountered during execution.
+which records the processing status, scan statistics, and any errors encountered during execution.
 
-## Processed Dataset
-
-The generated `scanXXXX.npz` file contains three NumPy arrays:
-
-| Array | Description |
-|-------|-------------|
-| `mono` | 2D grid of incident (monochromator) energies. |
-| `emission` | 2D grid of emission energies. |
-| `counts` | 2D histogram (RIXS plane) representing photon counts as a function of incident and emission energy. |
-
-These processed datasets are the primary input for the subsequent analysis modules.
-
+---
 
 ## 2. PFY Processing
 
-The PFY (Partial Fluorescence Yield) processing module extracts PFY spectra from the preprocessed RIXS datasets generated in **Step 1**. Multiple scans can be processed simultaneously, allowing the user to average RIXS maps, compare individual scans, and generate normalized PFY spectra.
+The PFY (Partial Fluorescence Yield) processing module extracts PFY spectra from the processed RIXS datasets generated during preprocessing. Multiple scans can be averaged to improve signal quality and reduce statistical noise.
 
 ### Input
 
-This script operates on the processed output from the preprocessing stage.
-
-For each scan, the following files are required:
+For each scan:
 
 - `scanXXXX.npz`
-  - Processed RIXS dataset containing:
-    - `mono` – incident energy grid
-    - `emission` – emission energy grid
-    - `counts` – RIXS intensity map
-
 - `scanXXXX_bld.npz`
-  - Beamline metadata containing the incident beam intensity (`I0`) and other scan parameters.
 
 ### User Inputs
 
-Before processing, the user specifies:
+- Scan range
+- Lower emission-energy limit
+- Upper emission-energy limit
 
-- Scan range (e.g. `1587–1590`)
-- PFY integration window:
-  - Lower emission energy
-  - Upper emission energy
-
-The selected emission energy window defines the region of the RIXS map used to calculate the PFY spectrum.
+The selected emission-energy window defines the region used to compute the PFY spectrum.
 
 ### Processing Workflow
 
-For every scan, the script performs the following steps:
+The script:
 
-1. Loads the processed RIXS map.
-2. Loads the corresponding beamline metadata.
-3. Integrates the RIXS intensity over the selected emission energy window.
-4. Normalizes the extracted PFY spectrum by the incident beam intensity (`I0`).
-5. Stores the PFY spectrum for each scan.
-6. Averages all RIXS maps.
-7. Area-normalizes each PFY spectrum.
-8. Computes the averaged normalized PFY spectrum.
-9. Plots:
-   - Average RIXS map
-   - Individual and averaged PFY spectra
-   - Individual and averaged `I0` curves
+1. Loads all selected scans.
+2. Integrates the RIXS intensity over the selected emission-energy range.
+3. Normalizes each spectrum by the incident beam intensity (`I₀`).
+4. Area-normalizes the PFY spectra.
+5. Computes the averaged PFY spectrum.
+6. Computes the averaged RIXS map.
+7. Generates diagnostic plots.
 
 ### Output
 
-All processed data are saved inside
+All processed data are written to
 
 ```text
 saved_output/
 ```
 
-The output directory contains:
-
-| File | Description |
-|------|-------------|
-| `avg_mono.txt` | Averaged incident energy grid. |
-| `avg_emission.txt` | Averaged emission energy grid. |
-| `avg_rixs_counts.txt` | Averaged RIXS intensity map. |
-| `pfy_raw_scanXXXX.txt` | Raw PFY spectrum extracted from each scan. |
-| `pfy_norm_scanXXXX.txt` | Area-normalized PFY spectrum for each scan. |
-| `pfy_norm_average.txt` | Averaged normalized PFY spectrum over all processed scans. |
-
-Example output:
+containing
 
 ```text
-saved_output/
-│
-├── avg_emission.txt
-├── avg_mono.txt
-├── avg_rixs_counts.txt
-├── pfy_norm_average.txt
-├── pfy_norm_scan1587.txt
-├── pfy_norm_scan1588.txt
-├── pfy_norm_scan1589.txt
-├── pfy_norm_scan1590.txt
-├── pfy_raw_scan1587.txt
-├── pfy_raw_scan1588.txt
-├── pfy_raw_scan1589.txt
-└── pfy_raw_scan1590.txt
+avg_emission.txt
+avg_mono.txt
+avg_rixs_counts.txt
+
+pfy_raw_scanXXXX.txt
+pfy_norm_scanXXXX.txt
+
+pfy_norm_average.txt
 ```
 
-### Generated Figures
+The script also displays
 
-During execution, the script also generates three diagnostic plots:
+- Averaged RIXS map
+- Individual and averaged PFY spectra
+- Individual and averaged I₀ curves
 
-1. **Average RIXS Map**
-   - Averaged two-dimensional RIXS intensity map from all selected scans.
-
-2. **PFY Spectra**
-   - Individual normalized PFY spectra.
-   - Averaged normalized PFY spectrum.
-
-3. **Incident Beam Intensity (I₀)**
-   - Individual I₀ curves for each scan.
-   - Averaged I₀ profile.
-
-These plots provide a quick quality check before proceeding with further analysis.
-
+---
 
 ## 3. RIXS Processing
 
-The RIXS processing module combines multiple preprocessed scans to generate an averaged RIXS map in energy-loss coordinates. In addition, it extracts several commonly used one-dimensional cuts from the RIXS plane for detailed spectral analysis.
+The RIXS processing module combines multiple scans to generate an averaged RIXS map in energy-loss coordinates and extracts several commonly used one-dimensional cuts.
 
 ### Input
 
-The script requires the processed datasets generated during **Step 1**.
+Processed RIXS datasets generated during preprocessing:
 
-For each scan, the following file is required:
-
-- `scanXXXX.npz`
-  - Contains:
-    - `mono` – incident energy grid
-    - `emission` – emission energy grid
-    - `counts` – RIXS intensity map
+```text
+scanXXXX.npz
+```
 
 ### User Inputs
 
-The user specifies:
-
-- Scan range (e.g. `1587–1590`)
-- Incident energies for **Constant Incident Energy (CIE)** cuts
-- Energy-loss values for **Constant Charge Transfer (CCT)** cuts
-- Emission energies for **Constant Emission Energy (CEE)** cuts
-
-Multiple values may be entered for each cut type.
+- Scan range
+- Constant Incident Energy (CIE) cuts
+- Constant Charge Transfer (CCT) cuts
+- Constant Emission Energy (CEE) cuts
 
 ### Processing Workflow
 
-The script performs the following operations:
+The script
 
-1. Loads all selected RIXS datasets.
-2. Verifies that all scans have identical dimensions.
-3. Averages the RIXS maps over the selected scan range.
-4. Converts the data to an energy-loss representation.
+1. Loads all selected scans.
+2. Verifies dimensional consistency.
+3. Computes the averaged RIXS map.
+4. Converts the data to energy-loss coordinates.
 5. Saves the averaged dataset as an HDF5 file.
-6. Generates an averaged RIXS energy-loss map.
-7. Extracts user-defined spectral cuts:
-   - Constant Incident Energy (CIE)
-   - Constant Charge Transfer (CCT)
-   - Constant Emission Energy (CEE)
-8. Displays each cut together with its corresponding position on the RIXS map.
-9. Saves every extracted cut as an individual text file.
+6. Extracts user-defined spectral cuts.
+7. Saves every extracted spectrum.
 
 ### Output
-
-The averaged RIXS dataset is saved as
 
 ```text
 RIXS_avg_direct_<start>_<end>.h5
 ```
 
-which contains
+containing
 
-- `avg_mono`
-- `avg_emission`
-- `avg_counts`
+```text
+avg_mono
+avg_emission
+avg_counts
+```
 
-The extracted spectra are organized into dedicated folders:
+Additional folders are created automatically:
 
 ```text
 CIE_cuts_<start>_<end>/
@@ -247,54 +187,72 @@ CCT_cuts_<start>_<end>/
 
 Each folder contains the corresponding one-dimensional spectra exported as text files.
 
-Example directory structure:
+The script also produces
+
+- Averaged RIXS energy-loss map
+- Constant Incident Energy (CIE) spectra
+- Constant Charge Transfer (CCT) spectra
+- Constant Emission Energy (CEE) spectra
+
+with the selected cuts overlaid on the RIXS map.
+
+---
+
+# Additional Analysis Utilities
+
+These scripts are optional utilities that provide advanced analysis methods and visualization tools. They are not required for the standard processing pipeline but can be useful for specialized analyses.
+
+---
+
+## Interactive Diagonal PFY Integration
+
+This utility provides an interactive interface for extracting **Diagonal Partial Fluorescence Yield (dPFY)** spectra directly from averaged RIXS maps.
+
+Unlike the standard PFY extraction, which integrates over a fixed emission-energy window, this tool integrates along a user-defined diagonal region of the RIXS plane. The integration region can be modified interactively, allowing rapid exploration of resonant features.
+
+### Features
+
+- Average multiple scans
+- Interactive diagonal PFY extraction
+- Adjustable diagonal offset
+- Adjustable integration width
+- Adjustable incident-energy range
+- Real-time PFY updates
+- Interactive integration-region overlay
+- I₀ normalization
+- Mouse hover displaying detector counts
+- One-click export of the current integration
+
+### Output
+
+The script creates
 
 ```text
-Processed/
-│
-├── RIXS_avg_direct_1587_1590.h5
-│
-├── CIE_cuts_1587_1590/
-│   ├── CIE_Loss_XXXeV.txt
-│   └── CIE_Emission_XXXeV.txt
-│
-├── CEE_cuts_1587_1590/
-│   ├── CEE_Incident_XXXeV.txt
-│   └── CEE_Loss_XXXeV.txt
-│
-└── CCT_cuts_1587_1590/
-    ├── CCT_Incident_XXXeV.txt
-    └── CCT_Emission_XXXeV.txt
+interactive_diagonal_pfy/
 ```
 
-### Generated Figures
+containing
 
-The script produces several diagnostic figures during execution:
+```text
+diagPFY_offset_*.txt
+diagPFY_offset_*_mask.txt
+diagPFY_offset_*.png
+```
 
-1. **Average RIXS Energy-Loss Map**
-   - Averaged RIXS intensity displayed in energy-loss coordinates.
+where
 
-2. **Constant Incident Energy (CIE) Cuts**
-   - Intensity plotted as a function of:
-     - Energy loss
-     - Emission energy
-
-3. **Constant Charge Transfer (CCT) Cuts**
-   - Intensity plotted as a function of:
-     - Incident energy
-     - Emission energy
-
-4. **Constant Emission Energy (CEE) Cuts**
-   - Intensity plotted as a function of:
-     - Incident energy
-     - Energy loss
-
-The selected cut positions are overlaid on the RIXS map, providing a visual reference for the extracted spectra.
-
-### Available Cut Types
-
-| Cut | Description |
+| File | Description |
 |------|-------------|
-| **CIE (Constant Incident Energy)** | Extracts spectra at fixed incident energy, allowing analysis of emission features and energy-loss excitations. |
-| **CCT (Constant Charge Transfer)** | Extracts spectra along constant energy-loss values, useful for following the evolution of specific excitations with incident energy. |
-| **CEE (Constant Emission Energy)** | Extracts spectra at fixed emission energy to investigate resonant behavior across the incident energy axis. |
+| `diagPFY_*.txt` | Normalized diagonal PFY spectrum |
+| `*_mask.txt` | Binary integration mask |
+| `*.png` | Snapshot of the RIXS map with the selected integration region |
+
+This utility is particularly useful for investigating resonant features that follow diagonal trajectories within the RIXS plane.
+
+---
+
+## Future Utilities
+
+Additional scripts for calibration, visualization, fitting, and advanced analysis will be added here as the repository continues to develop.
+
+---
