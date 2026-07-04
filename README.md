@@ -249,13 +249,6 @@ where
 
 This utility is particularly useful for investigating resonant features that follow diagonal trajectories within the RIXS plane.
 
----
-
-## Future Utilities
-
-Additional scripts for calibration, visualization, fitting, and advanced analysis will be added here as the repository continues to develop.
-
----
 
 ---
 
@@ -342,3 +335,11 @@ The script produces a plot of the integrated emission spectrum showing intensity
 If a monochromator energy window is selected, the corresponding integration range is included in the figure title.
 
 This utility provides a convenient method for extracting conventional X-ray emission spectra (XES) from TES RIXS datasets and allows users to investigate how the emission spectrum changes with the selected incident-energy range.
+
+---
+
+## Future Utilities
+
+Additional scripts for calibration, visualization, fitting, and advanced analysis will be added here as the repository continues to develop.
+
+---
