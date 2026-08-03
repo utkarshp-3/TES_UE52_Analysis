@@ -223,6 +223,24 @@ for idx, pfy in enumerate(pfy_area_norm):
 np.savetxt(os.path.join(save_folder, "pfy_norm_average.txt"),
            np.column_stack([pfy_axis, avg_pfy]),
            header="Incident_Energy(eV)   Averaged_Normalized_PFY")
+# --- 5. Save individual I0 curves ---
+for idx, i0_curve in enumerate(all_i0):
+    scan_num = start_xxx + idx
+    filename = os.path.join(save_folder, f"I0_scan{scan_num}.txt")
+    np.savetxt(
+        filename,
+        np.column_stack([all_i0_energy[idx], i0_curve]),
+        header="Incident_Energy(eV)   I0"
+    )
+
+# --- 6. Save averaged I0 ---
+avg_i0 = np.mean(np.array(all_i0), axis=0)
+
+np.savetxt(
+    os.path.join(save_folder, "I0_average.txt"),
+    np.column_stack([all_i0_energy[0], avg_i0]),
+    header="Incident_Energy(eV)   Average_I0"
+)
 
 print("📁 Data saved successfully.")
 
