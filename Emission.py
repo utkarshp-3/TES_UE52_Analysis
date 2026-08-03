@@ -25,7 +25,7 @@ import os
 # USER INPUTS
 # =========================================================
 
-folder_path = folder_path ='/Users/utkarshprakash/Documents/Phd/Beamtime/Data/TES Beamtime/Novemeber/Analysis/Analysis/Ferrocynide/Vertical'
+folder_path ='/Users/utkarshprakash/Documents/Phd/Beamtime/Data/TES Beamtime/Novemeber/Analysis/Analysis/Ferrocynide/Vertical'
 
 start_xxx = int(input("Enter start scan number: "))
 end_xxx   = int(input("Enter end scan number: "))
