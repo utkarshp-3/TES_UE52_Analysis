@@ -72,65 +72,91 @@ which records the processing status, scan statistics, and any errors encountered
 
 ---
 
-## 2. PFY Processing
+# 2. PFY Processing
 
-The PFY (Partial Fluorescence Yield) processing module extracts PFY spectra from the processed RIXS datasets generated during preprocessing. Multiple scans can be averaged to improve signal quality and reduce statistical noise.
+The PFY (Partial Fluorescence Yield) processing module extracts PFY
+spectra from the processed RIXS datasets generated during preprocessing.
+Multiple scans can be averaged to improve signal quality and reduce
+statistical noise. In addition to the PFY spectra, the script also
+stores the incident beam intensity (**I₀**) for each scan and the
+averaged I₀ curve for quality control.
 
-### Input
+## Input
 
 For each scan:
 
-- `scanXXXX.npz`
-- `scanXXXX_bld.npz`
+-   `scanXXXX.npz`
+-   `scanXXXX_bld.npz`
 
-### User Inputs
+## User Inputs
 
-- Scan range
-- Lower emission-energy limit
-- Upper emission-energy limit
+-   Scan range
+-   Lower emission-energy limit
+-   Upper emission-energy limit
 
-The selected emission-energy window defines the region used to compute the PFY spectrum.
+The selected emission-energy window defines the region used to compute
+the PFY spectrum.
 
-### Processing Workflow
+## Processing Workflow
 
 The script:
 
-1. Loads all selected scans.
-2. Integrates the RIXS intensity over the selected emission-energy range.
-3. Normalizes each spectrum by the incident beam intensity (`I₀`).
-4. Area-normalizes the PFY spectra.
-5. Computes the averaged PFY spectrum.
-6. Computes the averaged RIXS map.
-7. Generates diagnostic plots.
+1.  Loads all selected RIXS scans and their corresponding beamline data.
+2.  Checks that all RIXS maps have identical dimensions and skips
+    incompatible scans.
+3.  Integrates the RIXS intensity over the selected emission-energy
+    range to obtain the PFY spectrum.
+4.  Interpolates the incident beam intensity (**I₀**) onto the
+    incident-energy grid when necessary.
+5.  Normalizes each PFY spectrum by the corresponding **I₀**.
+6.  Area-normalizes the PFY spectra.
+7.  Computes the averaged PFY spectrum.
+8.  Computes the averaged RIXS map.
+9.  Computes the averaged **I₀** curve.
+10. Generates diagnostic plots for the averaged RIXS map, PFY spectra,
+    and **I₀** curves.
 
-### Output
+## Output
 
 All processed data are written to
 
-```text
+``` text
 saved_output/
 ```
 
 containing
 
-```text
+``` text
 avg_emission.txt
 avg_mono.txt
 avg_rixs_counts.txt
 
 pfy_raw_scanXXXX.txt
 pfy_norm_scanXXXX.txt
-
 pfy_norm_average.txt
+
+I0_scanXXXX.txt
+I0_average.txt
 ```
+
+where
+
+-   `pfy_raw_scanXXXX.txt` contains the I₀-normalized PFY spectrum for
+    each individual scan.
+-   `pfy_norm_scanXXXX.txt` contains the area-normalized PFY spectrum
+    for each scan.
+-   `pfy_norm_average.txt` contains the averaged area-normalized PFY
+    spectrum.
+-   `I0_scanXXXX.txt` contains the incident beam intensity for each
+    scan.
+-   `I0_average.txt` contains the averaged incident beam intensity.
 
 The script also displays
 
-- Averaged RIXS map
-- Individual and averaged PFY spectra
-- Individual and averaged I₀ curves
+-   Averaged RIXS map
+-   Individual and averaged PFY spectra
+-   Individual and averaged **I₀** curves
 
----
 
 ## 3. RIXS Processing
 
