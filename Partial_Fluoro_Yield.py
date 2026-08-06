@@ -33,6 +33,9 @@ all_pfy_energy = []
 
 all_i0 = []
 all_i0_energy = []
+all_i0_raw = []
+all_i0_raw_energy = []
+loaded_scan_numbers = []
 
 reference_shape = None
 
@@ -67,6 +70,7 @@ for xxx in range(start_xxx, end_xxx + 1):
         all_counts.append(counts)
         all_mono.append(mono)
         all_emission.append(emission)
+        loaded_scan_numbers.append(xxx)
 
         # ----------------------
         # Load beamline data
@@ -81,13 +85,15 @@ for xxx in range(start_xxx, end_xxx + 1):
         x_values = mono[0, :]
 
         # ----------------------
-        # Store I0 (interpolated)
+        # Store I0 (raw + interpolated)
         # ----------------------
         if len(i0) != len(x_values):
             i0_interp = np.interp(x_values, sgm_en, i0)
         else:
             i0_interp = i0
 
+        all_i0_raw.append(i0)
+        all_i0_raw_energy.append(sgm_en)
         all_i0.append(i0_interp)
         all_i0_energy.append(x_values)
 
@@ -108,7 +114,7 @@ for xxx in range(start_xxx, end_xxx + 1):
         pfy_norm = pfy_raw / i0_interp
 
         all_pfy.append(pfy_norm)
-        all_pfy_energy.append(x_values)
+        all_pfy_energy.append(x_values.copy())
 
         print(f"Loaded + processed {scan_file}")
 
@@ -144,13 +150,14 @@ plt.show()
 # ==== PFY AREA NORMALIZATION + AVERAGE ====================
 # ==========================================================
 pfy_axis = all_pfy_energy[0]
-pfy_area_norm = []
+pfy_interp_norm = []
 
-for pfy in all_pfy:
-    area = np.trapz(pfy, x=pfy_axis)
-    pfy_area_norm.append(pfy / area)
+for energy, pfy in zip(all_pfy_energy, all_pfy):
+    area = np.trapz(pfy, x=energy)
+    pfy_norm = pfy / area
+    pfy_interp_norm.append(np.interp(pfy_axis, energy, pfy_norm))
 
-pfy_area_norm = np.array(pfy_area_norm)
+pfy_area_norm = np.array(pfy_interp_norm)
 avg_pfy = np.mean(pfy_area_norm, axis=0)
 
 
@@ -176,7 +183,7 @@ plt.show()
 # ==========================================================
 plt.figure(figsize=(7, 5))
 for idx, i0_curve in enumerate(all_i0):
-    scan_num = start_xxx + idx
+    scan_num = loaded_scan_numbers[idx]
     plt.plot(all_i0_energy[idx], i0_curve, alpha=0.4, label=f"Scan {scan_num}")
 
 avg_i0 = np.mean(np.array(all_i0), axis=0)
@@ -201,46 +208,31 @@ np.savetxt(os.path.join(save_folder, "avg_mono.txt"), avg_mono)
 np.savetxt(os.path.join(save_folder, "avg_emission.txt"), avg_em)
 np.savetxt(os.path.join(save_folder, "avg_rixs_counts.txt"), avg_counts)
 
+for scan_num, e_raw, i_raw, e_int, i_int in zip(loaded_scan_numbers, all_i0_raw_energy, all_i0_raw, all_i0_energy, all_i0):
+    np.savetxt(os.path.join(save_folder, f"i0_raw_scan{scan_num}.txt"),
+               np.column_stack([e_raw, i_raw]),
+               header="SGM_Energy(eV)   I0_Raw")
+    np.savetxt(os.path.join(save_folder, f"i0_interp_scan{scan_num}.txt"),
+               np.column_stack([e_int, i_int]),
+               header="Mono_Energy(eV)   I0_Interpolated")
+
 np.savetxt(os.path.join(save_folder, "pfy_norm_average.txt"),
            np.column_stack([pfy_axis, avg_pfy]),
            header="Incident_Energy(eV)   Averaged_Normalized_PFY")
 
 # --- 2. Save individual raw PFY curves ---
 for idx, pfy in enumerate(all_pfy):
-    scan_num = start_xxx + idx
+    scan_num = loaded_scan_numbers[idx]
     filename = os.path.join(save_folder, f"pfy_raw_scan{scan_num}.txt")
     np.savetxt(filename, np.column_stack([pfy_axis, pfy]),
                header="Incident_Energy(eV)   PFY_Raw")
 
 # --- 3. Save individual normalized PFY curves ---
 for idx, pfy in enumerate(pfy_area_norm):
-    scan_num = start_xxx + idx
+    scan_num = loaded_scan_numbers[idx]
     filename = os.path.join(save_folder, f"pfy_norm_scan{scan_num}.txt")
     np.savetxt(filename, np.column_stack([pfy_axis, pfy]),
                header="Incident_Energy(eV)   PFY_Normalized")
-
-# --- 4. Save averaged normalized PFY ---
-np.savetxt(os.path.join(save_folder, "pfy_norm_average.txt"),
-           np.column_stack([pfy_axis, avg_pfy]),
-           header="Incident_Energy(eV)   Averaged_Normalized_PFY")
-# --- 5. Save individual I0 curves ---
-for idx, i0_curve in enumerate(all_i0):
-    scan_num = start_xxx + idx
-    filename = os.path.join(save_folder, f"I0_scan{scan_num}.txt")
-    np.savetxt(
-        filename,
-        np.column_stack([all_i0_energy[idx], i0_curve]),
-        header="Incident_Energy(eV)   I0"
-    )
-
-# --- 6. Save averaged I0 ---
-avg_i0 = np.mean(np.array(all_i0), axis=0)
-
-np.savetxt(
-    os.path.join(save_folder, "I0_average.txt"),
-    np.column_stack([all_i0_energy[0], avg_i0]),
-    header="Incident_Energy(eV)   Average_I0"
-)
 
 print("📁 Data saved successfully.")
 
